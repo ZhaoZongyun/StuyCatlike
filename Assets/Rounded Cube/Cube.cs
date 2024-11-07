@@ -10,7 +10,7 @@ using UnityEngine;
 /// 生成一个立方体网格
 /// </summary>
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class TestGrid2 : MonoBehaviour
+public class Cube : MonoBehaviour
 {
     public GameObject prefab;
     public int xSize, ySize, zSize;
