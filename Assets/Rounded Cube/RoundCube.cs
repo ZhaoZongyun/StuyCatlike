@@ -1,4 +1,6 @@
-﻿using TMPro;
+﻿using JetBrains.Annotations;
+using System;
+using TMPro;
 using UnityEngine;
 
 // https://catlikecoding.com/unity/tutorials/rounded-cube/
@@ -32,15 +34,29 @@ public class RoundCube : MonoBehaviour
 
         // 顶点
         int cornerCount = 8; //8个角
-        int edgeCount = (xSize + ySize + zSize - 6) * 4; // 12个边
+        int edgeCount = (xSize - 2 + ySize - 2 + zSize - 2) * 4; // 12个边
         int faceCount = ((xSize - 2) * (ySize - 2) + (xSize - 2) * (zSize - 2) + (ySize - 2) * (zSize - 2)) * 2; //4个面
+        ring = (xSize + zSize) * 2 - 4;
 
         vertices = new Vector3[cornerCount + edgeCount + faceCount];
         uv = new Vector2[vertices.Length];
         normals = new Vector3[vertices.Length];
 
-        int index = 0;
+        CreateVertices();
+        mesh.vertices = vertices;
 
+        //CreateTriangles();
+        //mesh.triangles = triangles;
+
+        CreateSubTriangles();
+
+        //mesh.uv = uv;
+        //mesh.normals = normals;
+    }
+
+    private void CreateVertices()
+    {
+        int index = 0;
         for (int y = 0; y < ySize; y++)
         {
             // 生成一层
@@ -75,7 +91,6 @@ public class RoundCube : MonoBehaviour
             }
         }
 
-        mesh.vertices = vertices;
         for (int i = 0; i < vertices.Length; i++)
         {
             var go = Instantiate(prefab);
@@ -84,10 +99,14 @@ public class RoundCube : MonoBehaviour
             text.text = i.ToString();
         }
 
+        CreateTriangles();
+    }
+
+    private void CreateTriangles()
+    {
         // 三角面
         int quads = ((xSize - 1) * (ySize - 1) + (xSize - 1) * (zSize - 1) + (ySize - 1) * (zSize - 1)) * 2;
         triangles = new int[quads * 6]; //一个四角面，6个顶点
-        ring = (xSize + zSize) * 2 - 4;
         int t = 0, v = 0;   //t 为 triangles 索引，v 为 顶点索引
 
         // 立方体中部四个面
@@ -99,17 +118,55 @@ public class RoundCube : MonoBehaviour
             t = SetQuad(triangles, t, v, v - (ring - 1), v + ring, v + 1);
         }
 
-        t = SetTopFace(t);
-        SetBottomFace(t);
+        t = SetTopFace(triangles,t);
+        SetBottomFace(triangles, t);
+    }
 
-        mesh.triangles = triangles;
+    // 创建子网格，前后左右上下，分别为 trianglesZ、trianglesX、trianglesY
+    private void CreateSubTriangles()
+    {
+        int[] trianglesZ = new int[xSize * ySize * 6 * 2];
+        int[] trianglesX = new int[xSize * ySize * 6 * 2];
+        int[] trianglesY = new int[xSize * ySize * 6 * 2];
+        int v = 0;
+        int tZ = 0;
+        int tX = 0;
+        int tY = 0;
+        for (int y = 0; y < ySize - 1; y++, v++)
+        {
+            for (int x = 0; x < xSize - 1; x++, v++)
+            {
+                tZ = SetQuad(trianglesZ, tZ, v, v + 1, v + ring, v + ring + 1);
+            }
+            for (int z = 0; z < zSize - 1; z++, v++)
+            {
+                tX = SetQuad(trianglesX, tX, v, v + 1, v + ring, v + ring + 1);
+            }
+            for (int x = 0; x < xSize - 1; x++, v++)
+            {
+                tZ = SetQuad(trianglesZ, tZ, v, v + 1, v + ring, v + ring + 1);
+            }
+            for (int z = 0; z < zSize - 2; z++, v++)
+            {
+                tX = SetQuad(trianglesX, tX, v, v + 1, v + ring, v + ring + 1);
+            }
+            tX = SetQuad(trianglesX, tX, v, v - ring + 1, v + ring, v + 1);
+        }
+
+        tY = SetTopFace(trianglesY, tY);
+        SetBottomFace(trianglesY, tY);
+
+        mesh.subMeshCount = 3;
+        mesh.SetTriangles(trianglesZ, 0);
+        mesh.SetTriangles(trianglesX, 1);
+        mesh.SetTriangles(trianglesY, 2);
     }
 
     private void SetVertex(int i, float x, float y, float z)
     {
         Vector3 inner = vertices[i] = new Vector3(x, y, z);
 
-        // 生成户型cube
+        // 生成弧形cube
         if (x < roundness)
             inner.x = roundness;
         else if (x > xSize - 1 - roundness)
@@ -130,7 +187,7 @@ public class RoundCube : MonoBehaviour
     }
 
     int start = 0, right = 0, leftTop = 0, rightTop, leftBorder = 0, rightBorder = 0;
-    private int SetTopFace(int t)
+    private int SetTopFace(int[] triangles, int t)
     {
         // 顶部
         start = ring * (ySize - 1);
@@ -195,7 +252,7 @@ public class RoundCube : MonoBehaviour
         return t;
     }
 
-    private int SetBottomFace(int t)
+    private int SetBottomFace(int[] triangles, int t)
     {
         // 底部
         start = 0;
@@ -279,7 +336,6 @@ public class RoundCube : MonoBehaviour
         triangles[i + 5] = rightTop;
         return i + 6;
     }
-
 
     private void OnDrawGizmos()
     {
