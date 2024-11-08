@@ -23,6 +23,7 @@ public class RoundCube : MonoBehaviour
     private Vector3[] vertices;
     private Vector2[] uv;
     private Vector3[] normals;
+    private Color32[] colors;
     private int[] triangles;
     private Mesh mesh;
     private int ring;
@@ -41,17 +42,21 @@ public class RoundCube : MonoBehaviour
         vertices = new Vector3[cornerCount + edgeCount + faceCount];
         uv = new Vector2[vertices.Length];
         normals = new Vector3[vertices.Length];
+        colors = new Color32[vertices.Length];
 
         CreateVertices();
         mesh.vertices = vertices;
 
+        // 创建三角面
         //CreateTriangles();
         //mesh.triangles = triangles;
 
+        // 创建多个三角面组（子网格）
         CreateSubTriangles();
 
-        //mesh.uv = uv;
-        //mesh.normals = normals;
+        mesh.uv = uv;
+        mesh.normals = normals;
+        mesh.colors32 = colors;
     }
 
     private void CreateVertices()
@@ -118,7 +123,7 @@ public class RoundCube : MonoBehaviour
             t = SetQuad(triangles, t, v, v - (ring - 1), v + ring, v + 1);
         }
 
-        t = SetTopFace(triangles,t);
+        t = SetTopFace(triangles, t);
         SetBottomFace(triangles, t);
     }
 
@@ -165,6 +170,7 @@ public class RoundCube : MonoBehaviour
     private void SetVertex(int i, float x, float y, float z)
     {
         Vector3 inner = vertices[i] = new Vector3(x, y, z);
+        colors[i] = new Color32((byte)x, (byte)y, (byte)z, 0);
 
         // 生成弧形cube
         if (x < roundness)
@@ -184,6 +190,7 @@ public class RoundCube : MonoBehaviour
 
         normals[i] = (vertices[i] - inner).normalized;
         vertices[i] = inner + normals[i] * roundness;
+        //colors[i] = new Color32((byte)x, (byte)y, (byte)z, 0);
     }
 
     int start = 0, right = 0, leftTop = 0, rightTop, leftBorder = 0, rightBorder = 0;
