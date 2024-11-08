@@ -1,19 +1,15 @@
-﻿using JetBrains.Annotations;
-using System;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
-// https://catlikecoding.com/unity/tutorials/rounded-cube/
-
 /// <summary>
-/// 生成一个立方体网格
+/// 生成一个球
 /// </summary>
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class RoundCube : MonoBehaviour
+public class CubeSphere : MonoBehaviour
 {
     public GameObject prefab;
-    public int xSize, ySize, zSize;
-    public int roundness;
+    public int gridSize;
+    public int radius;
 
     private void Awake()
     {
@@ -35,9 +31,9 @@ public class RoundCube : MonoBehaviour
 
         // 顶点
         int cornerCount = 8; //8个角
-        int edgeCount = (xSize - 2 + ySize - 2 + zSize - 2) * 4; // 12个边
-        int faceCount = ((xSize - 2) * (ySize - 2) + (xSize - 2) * (zSize - 2) + (ySize - 2) * (zSize - 2)) * 2; //4个面
-        ring = (xSize + zSize) * 2 - 4;
+        int edgeCount = (gridSize - 2 + gridSize - 2 + gridSize - 2) * 4; // 12个边
+        int faceCount = ((gridSize - 2) * (gridSize - 2) + (gridSize - 2) * (gridSize - 2) + (gridSize - 2) * (gridSize - 2)) * 2; //4个面
+        ring = (gridSize + gridSize) * 2 - 4;
 
         vertices = new Vector3[cornerCount + edgeCount + faceCount];
         uv = new Vector2[vertices.Length];
@@ -62,35 +58,35 @@ public class RoundCube : MonoBehaviour
     private void CreateVertices()
     {
         int index = 0;
-        for (int y = 0; y < ySize; y++)
+        for (int y = 0; y < gridSize; y++)
         {
             // 生成一层
-            for (int x = 0; x < xSize; x++)
+            for (int x = 0; x < gridSize; x++)
                 SetVertex(index++, x, y, 0);
 
-            for (int z = 1; z < zSize; z++)
-                SetVertex(index++, xSize - 1, y, z);
+            for (int z = 1; z < gridSize; z++)
+                SetVertex(index++, gridSize - 1, y, z);
 
-            for (int x = xSize - 2; x >= 0; x--)
-                SetVertex(index++, x, y, zSize - 1);
+            for (int x = gridSize - 2; x >= 0; x--)
+                SetVertex(index++, x, y, gridSize - 1);
 
-            for (int z = zSize - 2; z > 0; z--)
+            for (int z = gridSize - 2; z > 0; z--)
                 SetVertex(index++, 0, y, z);
         }
 
         // 顶部
-        for (int z = 1; z < zSize - 1; z++)
+        for (int z = 1; z < gridSize - 1; z++)
         {
-            for (int x = 1; x < xSize - 1; x++)
+            for (int x = 1; x < gridSize - 1; x++)
             {
-                SetVertex(index++, x, ySize - 1, z);
+                SetVertex(index++, x, gridSize - 1, z);
             }
         }
 
         // 底部
-        for (int z = 1; z < zSize - 1; z++)
+        for (int z = 1; z < gridSize - 1; z++)
         {
-            for (int x = 1; x < xSize - 1; x++)
+            for (int x = 1; x < gridSize - 1; x++)
             {
                 SetVertex(index++, x, 0, z);
             }
@@ -110,12 +106,12 @@ public class RoundCube : MonoBehaviour
     private void CreateTriangles()
     {
         // 三角面
-        int quads = ((xSize - 1) * (ySize - 1) + (xSize - 1) * (zSize - 1) + (ySize - 1) * (zSize - 1)) * 2;
+        int quads = ((gridSize - 1) * (gridSize - 1) + (gridSize - 1) * (gridSize - 1) + (gridSize - 1) * (gridSize - 1)) * 2;
         triangles = new int[quads * 6]; //一个四角面，6个顶点
         int t = 0, v = 0;   //t 为 triangles 索引，v 为 顶点索引
 
         // 立方体中部四个面
-        for (int y = 0; y < ySize - 1; y++, v++)
+        for (int y = 0; y < gridSize - 1; y++, v++)
         {
             // 从下到上一圈
             for (int x = 0; x < ring - 1; x++, v++)
@@ -130,28 +126,28 @@ public class RoundCube : MonoBehaviour
     // 创建子网格，前后左右上下，分别为 trianglesZ、trianglesX、trianglesY
     private void CreateSubTriangles()
     {
-        int[] trianglesZ = new int[xSize * ySize * 6 * 2];
-        int[] trianglesX = new int[xSize * ySize * 6 * 2];
-        int[] trianglesY = new int[xSize * ySize * 6 * 2];
+        int[] trianglesZ = new int[gridSize * gridSize * 6 * 2];
+        int[] trianglesX = new int[gridSize * gridSize * 6 * 2];
+        int[] trianglesY = new int[gridSize * gridSize * 6 * 2];
         int v = 0;
         int tZ = 0;
         int tX = 0;
         int tY = 0;
-        for (int y = 0; y < ySize - 1; y++, v++)
+        for (int y = 0; y < gridSize - 1; y++, v++)
         {
-            for (int x = 0; x < xSize - 1; x++, v++)
+            for (int x = 0; x < gridSize - 1; x++, v++)
             {
                 tZ = SetQuad(trianglesZ, tZ, v, v + 1, v + ring, v + ring + 1);
             }
-            for (int z = 0; z < zSize - 1; z++, v++)
+            for (int z = 0; z < gridSize - 1; z++, v++)
             {
                 tX = SetQuad(trianglesX, tX, v, v + 1, v + ring, v + ring + 1);
             }
-            for (int x = 0; x < xSize - 1; x++, v++)
+            for (int x = 0; x < gridSize - 1; x++, v++)
             {
                 tZ = SetQuad(trianglesZ, tZ, v, v + 1, v + ring, v + ring + 1);
             }
-            for (int z = 0; z < zSize - 2; z++, v++)
+            for (int z = 0; z < gridSize - 2; z++, v++)
             {
                 tX = SetQuad(trianglesX, tX, v, v + 1, v + ring, v + ring + 1);
             }
@@ -169,56 +165,40 @@ public class RoundCube : MonoBehaviour
 
     private void SetVertex(int i, float x, float y, float z)
     {
-        Vector3 inner = vertices[i] = new Vector3(x, y, z);
+        // cube 中心点放到偏移到原点
+        Vector3 v = new Vector3(x, y, z) / (gridSize - 1) - Vector3.one * 0.5f;
+        // 网格所有顶点都设到球面上
+        normals[i] = v.normalized;
+        vertices[i] = normals[i] * radius;
         colors[i] = new Color32((byte)x, (byte)y, (byte)z, 0);
-
-        // 生成弧形cube
-        if (x < roundness)
-            inner.x = roundness;
-        else if (x > xSize - 1 - roundness)
-            inner.x = xSize - 1 - roundness;
-
-        if (y < roundness)
-            inner.y = roundness;
-        else if (y > ySize - 1 - roundness)
-            inner.y = ySize - 1 - roundness;
-
-        if (z < roundness)
-            inner.z = roundness;
-        else if (z > zSize - 1 - roundness)
-            inner.z = zSize - 1 - roundness;
-
-        normals[i] = (vertices[i] - inner).normalized;
-        vertices[i] = inner + normals[i] * roundness;
-        //colors[i] = new Color32((byte)x, (byte)y, (byte)z, 0);
     }
 
     int start = 0, right = 0, leftTop = 0, rightTop, leftBorder = 0, rightBorder = 0;
     private int SetTopFace(int[] triangles, int t)
     {
         // 顶部
-        start = ring * (ySize - 1);
+        start = ring * (gridSize - 1);
         right = start + 1;
         leftTop = start + ring - 1;
         rightTop = start + ring;
 
         // 顶部第一行
-        for (int x = 0; x < xSize - 2; x++, start++, right++, leftTop++, rightTop++)
+        for (int x = 0; x < gridSize - 2; x++, start++, right++, leftTop++, rightTop++)
             t = SetQuad(triangles, t, start, right, leftTop, rightTop);
 
         rightTop = right + 1;
         t = SetQuad(triangles, t, start, right, leftTop, rightTop);
 
         // 顶部第二行~倒数第二行
-        leftBorder = ring * ySize - 1;
+        leftBorder = ring * gridSize - 1;
         rightBorder = rightTop;
-        for (int z = 0; z < zSize - 3; z++, leftBorder--, rightBorder++)
+        for (int z = 0; z < gridSize - 3; z++, leftBorder--, rightBorder++)
         {
             // 第一个四角面
             start = leftBorder;
-            right = leftBorder + 1 + (xSize - 1) * z;
+            right = leftBorder + 1 + (gridSize - 1) * z;
             leftTop = leftBorder - 1;
-            rightTop = right + (xSize - 2);
+            rightTop = right + (gridSize - 2);
             t = SetQuad(triangles, t, start, right, leftTop, rightTop);
 
             // 中间的四角面
@@ -226,7 +206,7 @@ public class RoundCube : MonoBehaviour
             right = right + 1;
             leftTop = rightTop;
             rightTop = leftTop + 1;
-            for (int x = 0; x < xSize - 3; x++, start++, right++, leftTop++, rightTop++)
+            for (int x = 0; x < gridSize - 3; x++, start++, right++, leftTop++, rightTop++)
                 t = SetQuad(triangles, t, start, right, leftTop, rightTop);
 
             // 最后一个四角面
@@ -238,7 +218,7 @@ public class RoundCube : MonoBehaviour
         // 顶部倒数第一行
         // 第一个四角面
         start = leftBorder;
-        right = vertices.Length - (xSize - 2) * (zSize - 2) - (xSize - 2);
+        right = vertices.Length - (gridSize - 2) * (gridSize - 2) - (gridSize - 2);
         leftTop = leftBorder - 1;
         rightTop = leftTop - 1;
         t = SetQuad(triangles, t, start, right, leftTop, rightTop);
@@ -248,7 +228,7 @@ public class RoundCube : MonoBehaviour
         right = start + 1;
         leftTop = rightTop;
         rightTop = leftTop - 1;
-        for (int x = 0; x < xSize - 3; x++, start++, right++, leftTop--, rightTop--)
+        for (int x = 0; x < gridSize - 3; x++, start++, right++, leftTop--, rightTop--)
             t = SetQuad(triangles, t, start, right, leftTop, rightTop);
 
         // 最后一个四角面
@@ -265,7 +245,7 @@ public class RoundCube : MonoBehaviour
         start = 0;
         leftTop = ring - 1;
         right = start + 1;
-        rightTop = vertices.Length - ((xSize - 2) * (zSize - 2));
+        rightTop = vertices.Length - ((gridSize - 2) * (gridSize - 2));
 
         // 底部第一行
         t = SetQuad(triangles, t, start, leftTop, right, rightTop);
@@ -276,7 +256,7 @@ public class RoundCube : MonoBehaviour
         rightTop = leftTop + 1;
 
         // 底部第一行，中间的四角面
-        for (int x = 0; x < xSize - 3; x++, start++, leftTop++, right = start + 1, rightTop++)
+        for (int x = 0; x < gridSize - 3; x++, start++, leftTop++, right = start + 1, rightTop++)
             t = SetQuad(triangles, t, start, leftTop, right, rightTop);
 
         // 底部第一行最后一个四角面
@@ -285,13 +265,13 @@ public class RoundCube : MonoBehaviour
 
         // 底部第二行 ~ 倒数第二行
         leftBorder = ring - 1;
-        rightBorder = xSize;
-        for (int z = 0; z < zSize - 3; z++, leftBorder--, rightBorder++)
+        rightBorder = gridSize;
+        for (int z = 0; z < gridSize - 3; z++, leftBorder--, rightBorder++)
         {
             start = leftBorder;
             leftTop = leftBorder - 1;
-            right = vertices.Length - ((xSize - 2) * (zSize - 2)) + (xSize - 2) * z;
-            rightTop = right + (xSize - 2);
+            right = vertices.Length - ((gridSize - 2) * (gridSize - 2)) + (gridSize - 2) * z;
+            rightTop = right + (gridSize - 2);
 
             // 第一个四角面
             t = SetQuad(triangles, t, start, leftTop, right, rightTop);
@@ -302,7 +282,7 @@ public class RoundCube : MonoBehaviour
             rightTop = leftTop + 1;
 
             // 中间的四角面
-            for (int x = 0; x < xSize - 3; x++, start++, leftTop++, right++, rightTop++)
+            for (int x = 0; x < gridSize - 3; x++, start++, leftTop++, right++, rightTop++)
                 t = SetQuad(triangles, t, start, leftTop, right, rightTop);
 
             // 最后一个四角面
@@ -314,7 +294,7 @@ public class RoundCube : MonoBehaviour
         // 底部倒数第一行
         start = leftBorder;
         leftTop = leftBorder - 1;
-        right = vertices.Length - (xSize - 2);
+        right = vertices.Length - (gridSize - 2);
         rightTop = leftTop - 1;
         t = SetQuad(triangles, t, start, leftTop, right, rightTop);
 
@@ -324,7 +304,7 @@ public class RoundCube : MonoBehaviour
         rightTop = leftTop - 1;
 
         // 底部倒数第一行，中间的四角面
-        for (int x = 0; x < xSize - 3; x++, start++, leftTop--, right++, rightTop--)
+        for (int x = 0; x < gridSize - 3; x++, start++, leftTop--, right++, rightTop--)
             t = SetQuad(triangles, t, start, leftTop, right, rightTop);
 
         // 底部倒数第一行，最后一个四角面
